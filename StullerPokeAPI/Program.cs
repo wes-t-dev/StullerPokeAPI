@@ -11,9 +11,6 @@
 using StullerPokeAPI.Services;
 using StullerPokeAPI.Models;
 
-Console.BackgroundColor = ConsoleColor.DarkBlue;
-Console.ForegroundColor = ConsoleColor.White;
-
 // Use a factory so Program can be tested by injecting a mock service if needed
 Func<PokeAPIService>? pokeApiFactory = () => new PokeAPIService();
 PokeAPIService pokeAPIService = pokeApiFactory();
