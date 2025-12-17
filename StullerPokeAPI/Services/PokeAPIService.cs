@@ -1,5 +1,6 @@
 ﻿using StullerPokeAPI.Models;
 using System.Text.Json;
+using System;
 
 namespace StullerPokeAPI.Services
 {
@@ -17,10 +18,16 @@ namespace StullerPokeAPI.Services
             };
         }
 
+        // New constructor to support Dependency Injection / testing by providing HttpClient
+        internal PokeAPIService(HttpClient httpClient)
+        {
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        }
+
 
         internal async Task<Dictionary<string, string>?> SendPokemonTypeRequestAsync(string pokemonName)
         {
-            Dictionary<string, string>? pokemonTypes = [];
+            Dictionary<string, string>? pokemonTypes = new Dictionary<string, string>();
             
             var request = new ApiRequestPokemonType { PokemonName = pokemonName };
 

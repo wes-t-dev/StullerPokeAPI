@@ -14,16 +14,12 @@ using StullerPokeAPI.Models;
 Console.BackgroundColor = ConsoleColor.DarkBlue;
 Console.ForegroundColor = ConsoleColor.White;
 
-PokeAPIService pokeAPIService = new();
+// Use a factory so Program can be tested by injecting a mock service if needed
+Func<PokeAPIService>? pokeApiFactory = () => new PokeAPIService();
+PokeAPIService pokeAPIService = pokeApiFactory();
 string pokemonName, user;
 
 Welcome();
-//GetPokemonName();
-//PokemonLookup(pokemonName);
-//WritePokemonTypeInformation();
-
-
-
 
 void Welcome()
 {
@@ -71,7 +67,7 @@ void PokemonLookup(string pokemonName)
 
     // Get types and type relations from PokeAPIService
 
-    var types = pokeAPIService.SendPokemonTypeRequestAsync(pokemonName).Result ?? [];
+    var types = pokeAPIService.SendPokemonTypeRequestAsync(pokemonName).Result ?? new Dictionary<string, string>();
     var responseTypeRelations = pokeAPIService.SendPokemonTypeRelationsRequestAsync(types).Result ?? new ApiResponseTypeRelations();
     var typeRelations = responseTypeRelations.TypeRelations ?? new TypeRelations();
 
@@ -80,9 +76,9 @@ void PokemonLookup(string pokemonName)
 
     // Build strengths and weaknesses from typeRelations
 
-    var noDamageFrom = string.Join(", ", typeRelations?.NoDamageFrom?.ConvertAll(t => t["name"]) ?? []);
-    var halfDamageFrom = string.Join(", ", typeRelations?.HalfDamageFrom?.ConvertAll(t => t["name"]) ?? []);
-    var doubleDamageTo = string.Join(", ", typeRelations?.DoubleDamageTo?.ConvertAll(t => t["name"]) ?? []);
+    var noDamageFrom = string.Join(", ", typeRelations?.NoDamageFrom?.ConvertAll(t => t["name"]) ?? new List<string>());
+    var halfDamageFrom = string.Join(", ", typeRelations?.HalfDamageFrom?.ConvertAll(t => t["name"]) ?? new List<string>());
+    var doubleDamageTo = string.Join(", ", typeRelations?.DoubleDamageTo?.ConvertAll(t => t["name"]) ?? new List<string>());
 
     var strengths = $"{(string.IsNullOrWhiteSpace(noDamageFrom) ? "" : noDamageFrom)}{(string.IsNullOrWhiteSpace(halfDamageFrom) ? "" : $", {halfDamageFrom}")}{(string.IsNullOrWhiteSpace(doubleDamageTo) ? "" : $", {doubleDamageTo}")}";
     if (strengths == ", , " || strengths.Length == 0)
@@ -90,9 +86,9 @@ void PokemonLookup(string pokemonName)
         strengths = "None";
     }
 
-    var noDamageTo = string.Join(", ", typeRelations?.NoDamageTo?.ConvertAll(t => t["name"]) ?? []);
-    var halfDamageTo = string.Join(", ", typeRelations?.HalfDamageTo?.ConvertAll(t => t["name"]) ?? []);
-    var doubleDamageFrom = string.Join(", ", typeRelations?.DoubleDamageFrom?.ConvertAll(t => t["name"]) ?? []);
+    var noDamageTo = string.Join(", ", typeRelations?.NoDamageTo?.ConvertAll(t => t["name"]) ?? new List<string>());
+    var halfDamageTo = string.Join(", ", typeRelations?.HalfDamageTo?.ConvertAll(t => t["name"]) ?? new List<string>());
+    var doubleDamageFrom = string.Join(", ", typeRelations?.DoubleDamageFrom?.ConvertAll(t => t["name"]) ?? new List<string>());
     var weaknesses = $"{(string.IsNullOrWhiteSpace(noDamageTo) ? "" : noDamageTo)}{(string.IsNullOrWhiteSpace(halfDamageTo) ? "" : $", {halfDamageTo}")}{(string.IsNullOrWhiteSpace(doubleDamageFrom) ? "" : $", {doubleDamageFrom}")}";
     if (weaknesses == ", , " || weaknesses.Length == 0)
     {
