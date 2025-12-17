@@ -1,33 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Nodes;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
-
-// Models/PokeApiModels.cs
 namespace StullerPokeAPI.Models
 {
-    public class ApiRequestPokemonType
+    internal class ApiRequestPokemonType
         {
             public string? PokemonName { get; set; }
         }
-    
-    public class ApiResponsePokemonType
-        {
-            public JsonArray? PokemonType { get; set; }
-            public bool Success { get; set; }
-        }
 
-    public class ApiRequestTypeRelations
+    internal class ApiRequestTypeRelations
     {
-        public JsonArray? PokemonType { get; set; }
+        public int PokemonType { get; set; }
     }
 
-    public class ApiResponseTypeRelations
+    internal class ApiResponseTypeRelations
     {
-        public JsonArray? TypeRelations { get; set; }
+        [JsonPropertyName("damage_relations")]
+        public TypeRelations? TypeRelations { get; set; } = null;
         public bool Success { get; set; }
     }
 }

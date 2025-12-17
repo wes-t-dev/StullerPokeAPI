@@ -8,71 +8,126 @@
 **************************************************/
 
 
-using System;
 using StullerPokeAPI.Services;
 using StullerPokeAPI.Models;
 
+Console.BackgroundColor = ConsoleColor.DarkBlue;
+Console.ForegroundColor = ConsoleColor.White;
 
-PokeAPIService pokeAPIService = new PokeAPIService();
+// Use a factory so Program can be tested by injecting a mock service if needed
+Func<PokeAPIService>? pokeApiFactory = () => new PokeAPIService();
+PokeAPIService pokeAPIService = pokeApiFactory();
+string pokemonName, user;
 
-Console.WriteLine("Hello, and welcome to the wonderful world of Pokémon!");
-Console.WriteLine("Please enter your name:");
+Welcome();
 
-var user = Console.ReadLine();
-
-if (string.IsNullOrWhiteSpace(user))
+void Welcome()
 {
-    user = "Mystery Trainer.";
-}
-Console.WriteLine($"Nice to meet you {user}");
+    Console.WriteLine(" Hello, and welcome to the wonderful world of Pokémon!");
+    Console.WriteLine(" I am your StullerPokeAPI guide, here to help you.");
+    Console.WriteLine("\n\n     What is your name?");
 
+    Console.Write(" : ");
+    var newUser = Console.ReadLine();
 
-Console.WriteLine(@"If you provide the name of a Pokémon, I can tell you its type, strengths, and weaknesses.
-Which Pokémon would you like to learn about today?");
-
-PokemonLookup();
-
-
-
-
-
-void PokemonLookup()
-{
-    var pokemonInput = Console.ReadLine();
-    if (string.IsNullOrWhiteSpace(pokemonInput))
+    if (string.IsNullOrWhiteSpace(newUser))
     {
-        Console.WriteLine("You didn't enter a Pokémon name. Please try again:");
-        PokemonLookup();
-        return;
-    }
-
-    Console.WriteLine($"Great choice! Let me fetch the information for {pokemonInput}...");
-
-    // Placeholder for API call and response handling
-
-    var type = pokeAPIService.SendPokemonTypeRequestAsync(pokemonInput).Result.PokemonType;
-    var typeRelations = pokeAPIService.SendPokemonTypeRelationsRequestAsync(type).Result.TypeRelations;
-
-    var strengths = "[Strengths Placeholder]";
-    var weaknesses = "[Weaknesses Placeholder]";
-
-
-
-    Console.WriteLine($"Here is the information for {pokemonInput}:");
-    Console.WriteLine($"Type: {type}");
-    Console.WriteLine($"Strengths: {strengths}");
-    Console.WriteLine($"Weaknesses: {weaknesses}");
-    Console.WriteLine("Thank you for using the StullerPokeAPI! Would you like to look up another Pokémon? (y/n)");
-
-    var continueInput = Console.ReadLine();
-    if (continueInput?.ToLower() == "y")
-    {
-        // Logic to restart the process
-        Console.WriteLine("Please enter the name of another Pokémon:");
-        PokemonLookup();
+        user = "Mysterious Trainer.";
     }
     else
     {
-        Console.WriteLine("Goodbye! Hope to see you again soon.");
+        user = newUser;
+    }
+    Console.WriteLine($" Nice to meet you {user}");
+    GetPokemonName();
+}
+
+
+void GetPokemonName()
+{
+    Console.WriteLine(" If you provide the name of a Pokémon, I can tell you its type, strengths, and weaknesses.");
+    Console.WriteLine("\n\n     Which Pokémon would you like to learn about today?");
+    Console.Write(": ");
+    string? pokemonNameInput = Console.ReadLine();
+    if (string.IsNullOrWhiteSpace(pokemonNameInput))
+    {
+        Console.WriteLine(" I didn't CATCH that. Please try again!");
+        GetPokemonName();
+    }
+    else
+    {
+        pokemonName = pokemonNameInput;
+        Console.WriteLine($" Let me gather the information for {pokemonName}...");
+        PokemonLookup(pokemonName);
+    }
+}
+
+void PokemonLookup(string pokemonName)
+{
+
+    // Get types and type relations from PokeAPIService
+
+    var types = pokeAPIService.SendPokemonTypeRequestAsync(pokemonName).Result ?? new Dictionary<string, string>();
+    var responseTypeRelations = pokeAPIService.SendPokemonTypeRelationsRequestAsync(types).Result ?? new ApiResponseTypeRelations();
+    var typeRelations = responseTypeRelations.TypeRelations ?? new TypeRelations();
+
+    var requestsSuccessful = types.Count > 0 && responseTypeRelations.Success && typeRelations?.ToString()?.Length > 0;
+
+
+    // Build strengths and weaknesses from typeRelations
+
+    var noDamageFrom = string.Join(", ", typeRelations?.NoDamageFrom?.ConvertAll(t => t["name"]) ?? new List<string>());
+    var halfDamageFrom = string.Join(", ", typeRelations?.HalfDamageFrom?.ConvertAll(t => t["name"]) ?? new List<string>());
+    var doubleDamageTo = string.Join(", ", typeRelations?.DoubleDamageTo?.ConvertAll(t => t["name"]) ?? new List<string>());
+
+    var strengths = $"{(string.IsNullOrWhiteSpace(noDamageFrom) ? "" : noDamageFrom)}{(string.IsNullOrWhiteSpace(halfDamageFrom) ? "" : $", {halfDamageFrom}")}{(string.IsNullOrWhiteSpace(doubleDamageTo) ? "" : $", {doubleDamageTo}")}";
+    if (strengths == ", , " || strengths.Length == 0)
+    {
+        strengths = "None";
+    }
+
+    var noDamageTo = string.Join(", ", typeRelations?.NoDamageTo?.ConvertAll(t => t["name"]) ?? new List<string>());
+    var halfDamageTo = string.Join(", ", typeRelations?.HalfDamageTo?.ConvertAll(t => t["name"]) ?? new List<string>());
+    var doubleDamageFrom = string.Join(", ", typeRelations?.DoubleDamageFrom?.ConvertAll(t => t["name"]) ?? new List<string>());
+    var weaknesses = $"{(string.IsNullOrWhiteSpace(noDamageTo) ? "" : noDamageTo)}{(string.IsNullOrWhiteSpace(halfDamageTo) ? "" : $", {halfDamageTo}")}{(string.IsNullOrWhiteSpace(doubleDamageFrom) ? "" : $", {doubleDamageFrom}")}";
+    if (weaknesses == ", , " || weaknesses.Length == 0)
+    {
+        weaknesses = "None";
+    }
+
+    WritePokemonTypeInformation(requestsSuccessful, types, strengths, weaknesses);
+}
+
+
+void WritePokemonTypeInformation(bool requestSuccess, Dictionary<string, string> pokemonType, string strengths, string weaknesses)
+{
+
+    if (requestSuccess == false)
+    {
+        Console.WriteLine($"\n\n");
+        Console.WriteLine($" I'm sorry {user}, but I couldn't find any information for the Pokémon '{pokemonName}'. Please check the name and try again.");
+        GetPokemonName();
+        return;
+    }
+    else
+    {
+        Console.WriteLine($" Great choice! Here is the information for {pokemonName}:");
+        Console.WriteLine($" Type: {string.Join(", ", pokemonType.Keys)}");
+        Console.WriteLine(strengths == "None" ? " This Pokémon is not strong against any type" : $" Strong Against: {strengths}");
+        Console.WriteLine(weaknesses == "None" ? " This Pokémon is not weak against any type" : $" Weak Against: {weaknesses}");
+        Console.WriteLine("\n\n     Would you like to look up another Pokémon? (y/n)");
+
+        Console.Write(": ");
+        var continueInput = Console.ReadLine();
+        if (continueInput?.ToLower() == "y")
+        {
+            // Logic to restart the process
+            Console.WriteLine("\n\n Wonderful, I'm glad you are excited to learn more!");
+            GetPokemonName();
+        }
+        else
+        {
+            Console.WriteLine($"\n\n    Thank you for using the StullerPokeAPI, we hope to see you again soon {user}!");
+        }
     }
 }
