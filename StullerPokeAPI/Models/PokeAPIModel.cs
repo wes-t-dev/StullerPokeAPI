@@ -1,4 +1,5 @@
-﻿// Models/PokeApiModels.cs
+﻿using System.Text.Json.Serialization;
+
 namespace StullerPokeAPI.Models
 {
     internal class ApiRequestPokemonType
@@ -13,7 +14,8 @@ namespace StullerPokeAPI.Models
 
     internal class ApiResponseTypeRelations
     {
-        public TypeRelations? TypeRelations { get; set; }
+        [JsonPropertyName("damage_relations")]
+        public TypeRelations? TypeRelations { get; set; } = null;
         public bool Success { get; set; }
     }
 }
